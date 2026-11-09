@@ -1,0 +1,39 @@
+name: fraud_analytics
+version: 1.0.0
+config-version: 2
+
+profile: fraud_analytics
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+packages-install-path: .cache/dbt_packages
+clean-targets:
+  - target
+  - logs
+  - .artifacts
+  - .cache/dbt_packages
+
+vars:
+  dbt_date:time_zone: UTC
+
+models:
+  fraud_analytics:
+    staging:
+      +materialized: view
+      +tags: [staging]
+    marts:
+      +materialized: table
+      +tags: [marts]
+
+seeds:
+  fraud_analytics:
+    states:
+      +column_types:
+        state_code: String
+        state_name: String
+        region: String

@@ -1,0 +1,64 @@
+version: 2
+
+sources:
+  - name: transactions_raw
+    description: Сырые транзакции, загруженные в ClickHouse из CSV.
+    schema: transactions_db
+    tables:
+      - name: transactions
+        description: Исходные операции клиентов с признаком мошенничества.
+        columns:
+          - name: transaction_time
+            description: Дата и время проведения операции.
+            data_tests:
+              - not_null
+          - name: merch
+            description: Наименование мерчанта.
+            data_tests:
+              - not_null
+          - name: cat_id
+            description: Категория операции.
+            data_tests:
+              - not_null
+          - name: amount
+            description: Сумма операции.
+            data_tests:
+              - not_null
+          - name: name_1
+            description: Имя клиента.
+          - name: name_2
+            description: Фамилия клиента.
+          - name: gender
+            description: Пол клиента.
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values: [M, F]
+          - name: street
+            description: Улица проживания клиента.
+          - name: one_city
+            description: Город проживания клиента.
+          - name: us_state
+            description: Код штата США.
+            data_tests:
+              - not_null
+          - name: post_code
+            description: Почтовый индекс клиента.
+          - name: lat
+            description: Широта местоположения клиента.
+          - name: lon
+            description: Долгота местоположения клиента.
+          - name: population_city
+            description: Население города клиента.
+          - name: jobs
+            description: Профессия клиента.
+          - name: merchant_lat
+            description: Широта местоположения мерчанта.
+          - name: merchant_lon
+            description: Долгота местоположения мерчанта.
+          - name: target
+            description: Признак мошенничества.
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values: [0, 1]
