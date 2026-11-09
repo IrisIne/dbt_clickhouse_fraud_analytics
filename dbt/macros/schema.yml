@@ -1,0 +1,42 @@
+version: 2
+
+macros:
+  - name: amount_bucket
+    description: Распределяет транзакции по диапазонам суммы.
+    arguments:
+      - name: column_name
+        type: column
+        description: Поле или SQL-выражение с суммой транзакции.
+  - name: customer_risk_level
+    description: Определяет уровень риска клиента по доле и числу фродовых операций и средней сумме.
+    arguments:
+      - name: fraud_rate_column
+        type: column
+        description: Доля фродовых операций клиента.
+      - name: fraud_count_column
+        type: column
+        description: Число фродовых операций клиента.
+      - name: average_amount_column
+        type: column
+        description: Средняя сумма транзакции клиента.
+  - name: clickhouse__date_part
+    description: Реализует dispatch календарных частей dbt_date для ClickHouse.
+    arguments:
+      - name: datepart
+        type: string
+        description: Название календарной части.
+      - name: date
+        type: column
+        description: Поле или SQL-выражение с датой.
+  - name: clickhouse__day_name
+    description: Возвращает полное или сокращенное название дня недели в ClickHouse.
+    arguments:
+      - name: date
+        type: column
+        description: Поле или SQL-выражение с датой.
+      - name: short
+        type: boolean
+        description: Признак сокращенного названия.
+      - name: language
+        type: string
+        description: Параметр совместимости с интерфейсом dbt_date.

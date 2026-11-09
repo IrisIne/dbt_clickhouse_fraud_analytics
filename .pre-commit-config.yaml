@@ -1,0 +1,38 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: local
+    hooks:
+      - id: dbt-deps
+        name: dbt-deps
+        entry: dbt deps --project-dir dbt --profiles-dir dbt
+        language: python
+        language_version: python3.12
+        additional_dependencies:
+          - dbt-core==1.10.23
+          - dbt-clickhouse==1.10.3
+        always_run: true
+        pass_filenames: false
+  - repo: https://github.com/sqlfluff/sqlfluff
+    rev: 4.5.0
+    hooks:
+      - id: sqlfluff-lint
+        language_version: python3.12
+        additional_dependencies:
+          - dbt-core==1.10.23
+          - dbt-clickhouse==1.10.3
+          - sqlfluff-templater-dbt==4.5.0
+        args:
+          [
+            --config,
+            .sqlfluff,
+            --ignore-local-config,
+            --dialect,
+            clickhouse,
+            --templater,
+            dbt,
+          ]

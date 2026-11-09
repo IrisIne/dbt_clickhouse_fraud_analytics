@@ -1,0 +1,134 @@
+version: 2
+
+models:
+  - name: stg_transactions
+    description: Очищенные транзакции с техническими идентификаторами и вычисляемыми признаками.
+    columns:
+      - name: transaction_id
+        description: Детерминированный идентификатор транзакции.
+        data_tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: Идентификатор клиента, построенный по персональным атрибутам.
+        data_tests:
+          - not_null
+      - name: merchant_id
+        description: Идентификатор мерчанта.
+        data_tests:
+          - not_null
+      - name: transaction_time
+        description: Нормализованное время транзакции.
+        data_tests:
+          - not_null
+      - name: transaction_date
+        description: Календарная дата транзакции.
+        data_tests:
+          - not_null
+      - name: transaction_hour
+        description: Час проведения транзакции.
+      - name: day_of_week_number
+        description: Номер дня недели от 1 до 7.
+      - name: day_of_week_name
+        description: Название дня недели.
+      - name: merch
+        description: Нормализованное название мерчанта.
+      - name: cat_id
+        description: Категория операции в нижнем регистре.
+        data_tests:
+          - not_null
+      - name: amount
+        description: Сумма операции с точностью до двух знаков.
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                strictly: false
+      - name: amount_bucket
+        description: Сегмент суммы, рассчитанный макросом amount_bucket.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [SMALL, MEDIUM, LARGE, VERY_LARGE]
+      - name: is_large_transaction
+        description: Признак транзакции на сумму от 500 единиц.
+      - name: name_1
+        description: Нормализованное имя клиента.
+      - name: name_2
+        description: Нормализованная фамилия клиента.
+      - name: customer_name
+        description: Полное имя клиента.
+      - name: gender
+        description: Нормализованный пол клиента.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [M, F]
+      - name: street
+        description: Улица проживания клиента.
+      - name: one_city
+        description: Город проживания клиента.
+      - name: us_state
+        description: Код штата США в верхнем регистре.
+        data_tests:
+          - not_null
+      - name: post_code
+        description: Почтовый индекс клиента.
+      - name: lat
+        description: Широта местоположения клиента.
+      - name: lon
+        description: Долгота местоположения клиента.
+      - name: population_city
+        description: Население города клиента.
+      - name: jobs
+        description: Профессия клиента.
+      - name: merchant_lat
+        description: Широта местоположения мерчанта.
+      - name: merchant_lon
+        description: Долгота местоположения мерчанта.
+      - name: merchant_distance_km
+        description: Расстояние между клиентом и мерчантом в километрах.
+      - name: fraud_flag
+        description: Признак мошеннической операции.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+
+unit_tests:
+  - name: test_transaction_normalization_and_amount_bucket
+    description: Проверяет нормализацию транзакции и сегментацию суммы.
+    model: stg_transactions
+    given:
+      - input: source('transactions_raw', 'transactions')
+        rows:
+          - transaction_time: "2019-01-01 10:30:00"
+            merch: "Test Merchant"
+            cat_id: "HEALTH_FITNESS"
+            amount: 19.99
+            name_1: "Jane"
+            name_2: "Doe"
+            gender: "f"
+            street: "1 Main Street"
+            one_city: "Los Angeles"
+            us_state: "ca"
+            post_code: "90001"
+            lat: 34.0522
+            lon: -118.2437
+            population_city: 3900000
+            jobs: "Analyst"
+            merchant_lat: 34.0522
+            merchant_lon: -118.2437
+            target: 1
+    expect:
+      rows:
+        - cat_id: health_fitness
+          amount: 19.99
+          amount_bucket: SMALL
+          is_large_transaction: 0
+          customer_name: Jane Doe
+          gender: F
+          us_state: CA
+          merchant_distance_km: 0
+          fraud_flag: 1

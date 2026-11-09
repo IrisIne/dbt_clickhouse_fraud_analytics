@@ -1,0 +1,100 @@
+name: dbt-clickhouse-homework
+
+x-dbt-common: &dbt-common
+  image: dbt-clickhouse-homework:latest
+  build:
+    context: .
+    dockerfile: docker/dbt/Dockerfile
+  working_dir: /usr/app/dbt
+  environment:
+    DBT_HOST: clickhouse
+    DBT_PORT: 8123
+    DBT_USER: ${CLICKHOUSE_USER:-pipeline_user}
+    DBT_PASSWORD: ${CLICKHOUSE_PASSWORD:-pipeline_password}
+    DBT_SCHEMA: analytics
+    DBT_TARGET_PATH: /usr/app/dbt/.artifacts/target
+    DBT_LOG_PATH: /usr/app/dbt/.artifacts/logs
+  volumes:
+    - dbt-packages:/usr/app/dbt/.cache
+    - dbt-artifacts:/usr/app/dbt/.artifacts
+  networks: [dbt-network]
+
+services:
+  clickhouse:
+    build:
+      context: .
+      dockerfile: clickhouse/Dockerfile
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      CLICKHOUSE_DB: transactions_db
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-pipeline_user}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-pipeline_password}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "clickhouse-client --user $$CLICKHOUSE_USER --password $$CLICKHOUSE_PASSWORD --query 'SELECT 1' >/dev/null 2>&1",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    networks: [dbt-network]
+
+  dbt-build:
+    <<: *dbt-common
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "-ec"]
+    command:
+      - |
+        dbt deps
+        dbt build --full-refresh
+        dbt docs generate
+    restart: "no"
+
+  dbt-docs:
+    <<: *dbt-common
+    depends_on:
+      dbt-build:
+        condition: service_completed_successfully
+    command:
+      [
+        "python",
+        "-m",
+        "http.server",
+        "8080",
+        "--bind",
+        "0.0.0.0",
+        "--directory",
+        "/usr/app/dbt/.artifacts/target",
+      ]
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  dbt:
+    <<: *dbt-common
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    entrypoint: ["dbt"]
+    profiles: [tools]
+
+volumes:
+  clickhouse-data:
+  dbt-packages:
+  dbt-artifacts:
+
+networks:
+  dbt-network:
+    driver: bridge

@@ -1,0 +1,14 @@
+.git
+.env
+.venv
+.DS_Store
+__pycache__
+*.py[cod]
+.pytest_cache
+dbt/dbt_packages
+dbt/logs
+dbt/target
+dbt/.user.yml
+dbt/.cache
+dbt/.artifacts
+artifacts

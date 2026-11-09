@@ -1,0 +1,180 @@
+version: 2
+
+models:
+  - name: mart_daily_state_metrics
+    description: Дневные показатели объема и распределения транзакций по штатам.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [transaction_date, us_state]
+    columns:
+      - name: transaction_date
+        description: Дата агрегации.
+        data_tests:
+          - not_null
+      - name: us_state
+        description: Код штата США.
+        data_tests:
+          - not_null
+      - name: transaction_count
+        description: Количество транзакций.
+        data_tests:
+          - not_null
+      - name: total_amount
+        description: Общая сумма транзакций.
+      - name: average_amount
+        description: Средняя сумма транзакции.
+      - name: p95_amount
+        description: Девяносто пятый перцентиль суммы.
+      - name: large_transaction_rate
+        description: Доля операций от 500 единиц в процентах.
+
+  - name: mart_fraud_by_category
+    description: Показатели мошенничества и оборота по категориям транзакций.
+    columns:
+      - name: cat_id
+        description: Категория транзакции.
+        data_tests:
+          - not_null
+          - unique
+      - name: transaction_count
+        description: Общее число транзакций.
+      - name: fraud_count
+        description: Число мошеннических транзакций.
+      - name: fraud_rate
+        description: Доля мошеннических транзакций в процентах.
+      - name: total_amount
+        description: Общий оборот категории.
+      - name: fraud_amount
+        description: Сумма мошеннических транзакций.
+      - name: average_amount
+        description: Средняя сумма транзакции.
+
+  - name: mart_fraud_by_state
+    description: Географические показатели мошенничества по штатам США.
+    columns:
+      - name: us_state
+        description: Код штата США.
+        data_tests:
+          - not_null
+          - unique
+      - name: state_name
+        description: Полное название штата.
+        data_tests:
+          - not_null
+      - name: region
+        description: Регион США.
+      - name: transaction_count
+        description: Общее число транзакций.
+      - name: fraud_count
+        description: Число мошеннических транзакций.
+      - name: fraud_rate
+        description: Доля мошеннических транзакций в процентах.
+      - name: unique_customers
+        description: Число уникальных клиентов.
+      - name: unique_merchants
+        description: Число уникальных мерчантов.
+      - name: total_amount
+        description: Общий оборот штата.
+      - name: fraud_amount
+        description: Сумма мошеннических транзакций.
+
+  - name: mart_customer_risk_profile
+    description: История операций и сегмент риска каждого клиента.
+    columns:
+      - name: customer_id
+        description: Идентификатор клиента.
+        data_tests:
+          - not_null
+          - unique
+      - name: name_1
+        description: Имя клиента.
+      - name: name_2
+        description: Фамилия клиента.
+      - name: customer_name
+        description: Имя и фамилия клиента.
+      - name: us_state
+        description: Штат клиента.
+      - name: transaction_count
+        description: Число транзакций клиента.
+      - name: fraud_count
+        description: Число мошеннических транзакций клиента.
+      - name: fraud_rate
+        description: Доля мошеннических транзакций в процентах.
+      - name: average_amount
+        description: Средняя сумма транзакции.
+      - name: maximum_amount
+        description: Максимальная сумма транзакции.
+      - name: total_amount
+        description: Общая сумма транзакций клиента.
+      - name: first_transaction_time
+        description: Время первой транзакции клиента в выборке.
+      - name: last_transaction_time
+        description: Время последней транзакции клиента в выборке.
+      - name: risk_level
+        description: Итоговый уровень риска клиента.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [HIGH, MEDIUM, LOW]
+
+  - name: mart_hourly_fraud_pattern
+    description: Распределение мошеннических транзакций по дням недели и часам.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [day_of_week_number, transaction_hour]
+    columns:
+      - name: day_of_week_number
+        description: Номер дня недели от 1 до 7.
+        data_tests:
+          - not_null
+      - name: day_of_week_name
+        description: Название дня недели.
+      - name: transaction_hour
+        description: Час проведения транзакции.
+        data_tests:
+          - not_null
+      - name: transaction_count
+        description: Общее число транзакций.
+      - name: fraud_count
+        description: Число мошеннических транзакций.
+      - name: fraud_rate
+        description: Доля мошеннических транзакций в процентах.
+      - name: average_amount
+        description: Средняя сумма транзакции.
+      - name: total_amount
+        description: Общая сумма транзакций.
+
+  - name: mart_merchant_analytics
+    description: Оборот, аудитория и признаки подозрительности мерчантов.
+    columns:
+      - name: merchant_id
+        description: Идентификатор мерчанта.
+        data_tests:
+          - not_null
+          - unique
+      - name: merch
+        description: Название мерчанта.
+      - name: primary_category
+        description: Основная категория мерчанта.
+      - name: transaction_count
+        description: Общее число транзакций.
+      - name: fraud_count
+        description: Число мошеннических транзакций.
+      - name: fraud_rate
+        description: Доля мошеннических транзакций в процентах.
+      - name: unique_customers
+        description: Число уникальных клиентов.
+      - name: turnover
+        description: Общий оборот мерчанта.
+      - name: average_amount
+        description: Средняя сумма транзакции.
+      - name: maximum_amount
+        description: Максимальная сумма транзакции.
+      - name: suspicious_flag
+        description: Признак повышенного риска мерчанта.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
